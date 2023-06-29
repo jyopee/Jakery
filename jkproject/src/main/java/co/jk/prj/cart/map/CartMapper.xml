@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.jk.prj.cart.map.CartMapper">
+	<select id="cartSelectList"
+		resultType="co.jk.prj.cart.service.CartVO">
+		SELECT c.pr_cart_id, i.pr_img_name ,p.pr_name, p.pr_price,
+		c.pr_amount,
+		p.pr_price*c.pr_amount AS total
+		FROM pr_img i
+		JOIN product p
+		ON i.pr_id = p.pr_id
+		JOIN pr_cart c
+		ON p.pr_id = c.pr_id
+	</select>
+
+	<select id="cartSelect"
+		resultType="co.jk.prj.cart.service.CartVO">
+		SELECT c.pr_cart_id, i.pr_img_name ,p.pr_name, p.pr_price,
+		c.pr_amount, p.pr_price*c.pr_amount AS total
+		FROM pr_img i
+		JOIN product
+		p
+		ON i.pr_id = p.pr_id
+		JOIN pr_cart c
+		ON p.pr_id = c.pr_id
+		WHERE member_id
+		= #{memberId}
+	</select>
+
+	<select id="cartSelectf"
+		resultType="co.jk.prj.cart.service.CartVO">
+		SELECT c.pr_cart_id, i.pr_img_name ,p.pr_name,p.pr_id, p.pr_price,
+		c.pr_amount,
+		p.pr_price*c.pr_amount AS total
+		FROM pr_img i
+		JOIN product p
+		ON i.pr_id =
+		p.pr_id
+		JOIN pr_cart c
+		ON p.pr_id = c.pr_id
+		WHERE member_id =
+		#{memberId}
+	</select>
+
+
+	<insert id="cartInsert"
+		parameterType="co.jk.prj.cart.service.CartVO">
+		<selectKey keyProperty="prCartId" resultType="int"
+			order="BEFORE">
+			SELECT CASE WHEN MAX(PR_CART_ID) IS NULL THEN 1 ELSE
+			MAX(PR_CART_ID) + 1
+			END
+			AS ID
+			FROM PR_CART
+		</selectKey>
+		INSERT INTO PR_CART
+		VALUES(#{prCartId},#{prId},#{memberId},#{prAmount})
+	</insert>
+
+	<delete id="cartDelete"
+		parameterType="co.jk.prj.cart.service.CartVO">
+		DELETE FROM Pr_CART WHERE Pr_CART_ID = #{prCartId}
+
+	</delete>
+
+	<update id="cartUpdate">
+		UPDATE PR_CART SET PR_AMOUNT = #{prAmount}
+		WHERE
+		pr_cart_id = #{prCartId} AND member_id = #{memberId}
+	</update>
+
+	<update id="cartDupUpdate">
+		UPDATE PR_CART SET PR_AMOUNT = PR_AMOUNT+#{prAmount}
+		WHERE PR_ID = #{prId}
+	</update>
+
+	<select id="cartSumView"
+		resultType="co.jk.prj.cart.service.CartVO">
+		SELECT sum(a.pr_price * b.pr_amount)
+		FROM product a, pr_cart
+		b
+		WHERE b.pr_id = a.pr_id
+	</select>
+
+</mapper>

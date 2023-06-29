@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.jk.prj.qna.map.QnaMapper">
+	<select id="qnaSelectList"
+		resultType="co.jk.prj.qna.service.QnaVO">
+		SELECT Q.*,
+		I.PR_IMG_NAME,
+		P.PR_NAME,
+		M.MEMBER_NAME
+		FROM PR_QNA Q JOIN
+		PRODUCT P
+		ON Q.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON Q.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID =
+		I.PR_ID
+		<if test="prId != 0"> WHERE PR_ID = #{prId}</if>
+		<if test="prId == 0"> WHERE 1 = 1</if>
+		ORDER BY PR_QNA_ID DESC
+	</select>
+
+	<select id="qnaSelect" resultType="co.jk.prj.qna.service.QnaVO">
+		SELECT p.*,
+		m.MEMBER_NAME
+		FROM
+		PR_QNA P JOIN MEMBER M
+		ON P.MEMBER_ID = M.MEMBER_ID
+		WHERE P.PR_QNA_ID =
+		#{prQnaId}
+	</select>
+
+	<insert id="qnaInsert"
+		parameterType="co.jk.prj.qna.service.QnaVO">
+		<selectKey keyProperty="prQnaId" resultType="int"
+			order="BEFORE">
+			SELECT
+			CASE WHEN MAX(PR_QNA_ID) IS NULL THEN 1
+			ELSE
+			MAX(PR_QNA_ID)+1
+			END AS ID
+			FROM PR_QNA
+		</selectKey>
+		INSERT INTO PR_QNA (pr_qna_id, PR_ID, MEMBER_ID, PR_QNA_TITLE,
+		PR_QNA_SUBJECT, PR_QNA_HIT, PR_QNA_SECRET)
+		VALUES(#{prQnaId}, #{prId},
+		#{memberId}, #{prQnaTitle}, #{prQnaSubject}, 0,#{prQnaSecret})
+	</insert>
+
+	<update id="qnaUpdate"
+		parameterType="co.jk.prj.qna.service.QnaVO">
+		UPDATE PR_QNA
+		<set>
+			<if test="prQnaTitle != null">PR_QNA_TITLE = #{prQnaTitle},</if>
+			<if test="prQnaSubject != null">PR_QNA_SUBJECT = #{prQnaSubject},</if>
+			<if test="prQnaSecret != null">PR_QNA_SECRET = #{prQnaSecret}</if>
+		</set>
+		WHERE PR_QNA_ID = #{prQnaId}
+	</update>
+
+	<delete id="qnaDelete"
+		parameterType="co.jk.prj.qna.service.QnaVO">
+		DELETE FROM PR_QNA WHERE PR_QNA_ID = #{prQnaId}
+	</delete>
+
+	<!-- 번호업댓 -->
+	<update id="qnaIdUpdate"
+		parameterType="co.jk.prj.qna.service.QnaVO">
+		UPDATE PR_QNA SET PR_QNA_ID = (PR_QNA_ID - 1) WHERE PR_QNA_ID <![CDATA[>]]>
+		#{id}
+	</update>
+
+	<!-- 조회수 증가 -->
+	<update id="qnaHitUpdate">
+		UPDATE PR_QNA SET PR_QNA_HIT = PR_QNA_HIT + 1
+		WHERE
+		PR_QNA_ID = #{id}
+	</update>
+
+	<!-- (전체게시판 )게시글 검색 -->
+	<select id="qnaSearchList"
+		resultType="co.jk.prj.qna.service.QnaVO">
+		select * from (select rownum rn, a.*
+		from (SELECT Q.*,
+		I.PR_IMG_NAME,
+		P.PR_NAME,
+		M.MEMBER_NAME
+		FROM PR_QNA Q JOIN
+		PRODUCT P
+		ON Q.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON Q.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID =
+		I.PR_ID
+		<if test="key == 'all'">WHERE 1 = 1</if>
+		<if test="key == 'prQnaTitle'">WHERE Q.PR_QNA_TITLE LIKE '%'||#{val}||'%'</if>
+		<if test="key == 'memberName'">WHERE M.MEMBER_NAME LIKE '%'||#{val}||'%' </if>
+		<if test="key == 'memberId'">WHERE Q.MEMBER_ID LIKE '%'||#{val}||'%' </if>)
+		a )
+		where rn <![CDATA[>]]>
+		((#{pageNum}-1)*#{amount}) and rn <![CDATA[<=]]>
+		(#{pageNum}*#{amount})
+	</select>
+	
+	<!--게시글 검색 -->
+	<select id="qnaOneSearchList"
+		resultType="co.jk.prj.qna.service.QnaVO">
+		SELECT Q.*,
+		I.PR_IMG_NAME,
+		P.PR_NAME,
+		M.MEMBER_NAME
+		FROM PR_QNA Q JOIN
+		PRODUCT P
+		ON Q.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON Q.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID =
+		I.PR_ID
+		<if test="key == 'all'">WHERE 1 = 1</if>
+		<if test="key == 'prQnaTitle'">WHERE Q.PR_QNA_TITLE LIKE '%'||#{val}||'%' And pr_id = #{id}</if>
+		<if test="key == 'memberName'">WHERE M.MEMBER_NAME LIKE '%'||#{val}||'%' And pr_id = #{id}</if>
+		<if test="key == 'memberId'">WHERE Q.MEMBER_ID LIKE '%'||#{val}||'%' And pr_id = #{id}
+		</if>
+	</select>
+
+	<!-- 페이징 -->
+	<select id="getList" resultType="co.jk.prj.qna.service.QnaVO">
+		select * from (select rownum rn, a.*
+		from (SELECT Q.*,
+		I.PR_IMG_NAME,
+		P.PR_NAME,
+		M.MEMBER_NAME
+		FROM PR_QNA Q JOIN
+		PRODUCT P
+		ON Q.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON Q.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID =
+		I.PR_ID
+		ORDER BY PR_QNA_ID DESC) a )
+		where rn <![CDATA[>]]>
+		((#{pageNum}-1)*#{amount}) and rn <![CDATA[<=]]>
+		(#{pageNum}*#{amount})
+	</select>
+
+	<!-- 전체게시글수 -->
+	<select id="getTotal" resultType="co.jk.prj.qna.service.QnaVO">
+		SELECT * FROM PR_QNA
+	</select>
+	
+	<!-- 검색시 전체 게시글 수  -->
+	<select id="getSearchTotal" resultType="int">
+		SELECT COUNT(*) AS TOTAL 
+		FROM PR_QNA Q JOIN
+		PRODUCT P
+		ON Q.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON Q.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID = I.PR_ID
+		<if test="key == 'all'">WHERE 1 = 1</if>
+		<if test="key == 'prQnaTitle'">WHERE Q.PR_QNA_TITLE LIKE '%'||#{val}||'%'</if>
+		<if test="key == 'memberName'">WHERE M.MEMBER_NAME LIKE '%'||#{val}||'%' </if>
+		<if test="key == 'memberId'">WHERE Q.MEMBER_ID LIKE '%'||#{val}||'%' </if>
+	</select>
+</mapper>

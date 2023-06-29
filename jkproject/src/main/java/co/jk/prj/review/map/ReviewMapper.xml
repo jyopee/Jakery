@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.jk.prj.review.map.ReviewMapper">
+<select id="reviewSelectList"
+		resultType="co.jk.prj.review.service.ReviewVO">
+		SELECT R.*,   
+		I.PR_IMG_NAME,
+		P.PR_NAME,
+		M.MEMBER_NAME
+		FROM PR_REVIEW R JOIN
+		PRODUCT P
+		ON R.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON R.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID = I.PR_ID
+		<if test="prId != 0"> WHERE PR_ID = #{prId}</if>
+		<if test="prId == 0"> WHERE 1 = 1</if>
+		ORDER BY PR_REVIEW_ID DESC
+	</select>
+
+	<select id="reviewSelect" resultType="co.jk.prj.review.service.ReviewVO">
+		SELECT R.*,
+		M.MEMBER_NAME
+		FROM PR_REVIEW R JOIN MEMBER M
+		ON R.MEMBER_ID = M.MEMBER_ID
+		WHERE R.PR_REVIEW_ID = #{prReviewId}
+	</select>
+
+	<insert id="reviewInsert"
+		parameterType="co.jk.prj.review.service.ReviewVO">
+		<selectKey keyProperty="prReviewId" resultType="int"
+			order="BEFORE">
+			SELECT
+			CASE WHEN MAX(PR_REVIEW_ID) IS NULL THEN 1
+			ELSE
+			MAX(PR_REVIEW_ID)+1
+			END AS ID
+			FROM PR_REVIEW
+		</selectKey>
+		INSERT INTO PR_REVIEW (PR_REVIEW_ID, PR_ID, MEMBER_ID, PR_REVIEW_TITLE,
+		PR_REVIEW_SUBJECT, PR_REVIEW_HIT, PR_REVIEW_STAR)
+		VALUES(#{prReviewId}, #{prId},
+		#{memberId}, #{prReviewTitle}, #{prReviewSubject}, 0,#{prReviewStar})
+	</insert>
+
+	<update id="reviewUpdate"
+		parameterType="co.jk.prj.review.service.ReviewVO">
+		UPDATE PR_REVIEW
+		<set>
+			<if test="prReviewTitle != null">PR_REVIEW_TITLE = #{prReviewTitle},</if>
+			<if test="prReviewSubject != null">PR_REVIEW_SUBJECT = #{prReviewSubject},</if>
+			<if test="prReviewStar != null">PR_REVIEW_STAR = #{prReviewStar}</if>
+		</set>
+		WHERE PR_REVIEW_ID = #{prReviewId}
+	</update>
+
+	<delete id="reviewDelete"
+		parameterType="co.jk.prj.review.service.ReviewVO">
+		DELETE FROM PR_REVIEW WHERE PR_REVIEW_ID = #{prReviewId}
+	</delete>
+
+<!-- 번호업댓 -->
+	<update id="reviewIdUpdate"
+		parameterType="co.jk.prj.review.service.ReviewVO">
+		UPDATE PR_REVIEW SET PR_REVIEW_ID = (PR_REVIEW_ID - 1) WHERE PR_REVIEW_ID <![CDATA[>]]> #{id}
+	</update>
+
+	<!-- 조회수 증가 -->
+	<update id="reviewHitUpdate">
+		UPDATE PR_REVIEW SET PR_REVIEW_HIT = PR_REVIEW_HIT + 1
+		WHERE
+		PR_REVIEW_ID = #{id}
+	</update>
+
+	<!-- (전체게시판) 게시글 검색 -->
+	<select id="reviewSearchList"
+		resultType="co.jk.prj.review.service.ReviewVO">
+		select * from (select rownum rn, a.*
+		from (SELECT R.*,   
+		I.PR_IMG_NAME,
+		P.PR_NAME,
+		M.MEMBER_NAME
+		FROM PR_REVIEW R JOIN
+		PRODUCT P
+		ON R.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON R.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID = I.PR_ID
+		<if test="key == 'all'">WHERE 1 = 1</if>
+		<if test="key == 'prReviewTitle'">WHERE r.PR_REVIEW_TITLE LIKE '%'||#{val}||'%'</if>
+		<if test="key == 'memberName'">WHERE M.MEMBER_NAME LIKE '%'||#{val}||'%' </if>
+		<if test="key == 'memberId'">WHERE r.MEMBER_ID LIKE '%'||#{val}||'%' </if>) a )
+		where rn <![CDATA[>]]>
+		((#{pageNum}-1)*#{amount}) and rn <![CDATA[<=]]>
+		(#{pageNum}*#{amount})
+	</select>
+	<!--게시글 검색 -->
+	<select id="reviewOneSearchList"
+		resultType="co.jk.prj.review.service.ReviewVO">
+		SELECT R.*,   
+		I.PR_IMG_NAME,
+		P.PR_NAME,
+		M.MEMBER_NAME
+		FROM PR_REVIEW R JOIN
+		PRODUCT P
+		ON R.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON R.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID = I.PR_ID
+		<if test="key == 'all'">WHERE pr_id = #{id}</if>
+		<if test="key == 'prReviewTitle'">WHERE r.PR_REVIEW_TITLE LIKE '%'||#{val}||'%' And pr_id = #{id}</if>
+		<if test="key == 'memberName'">WHERE M.MEMBER_NAME LIKE '%'||#{val}||'%' And pr_id = #{id}</if>
+		<if test="key == 'memberId'">WHERE r.MEMBER_ID LIKE '%'||#{val}||'%' And pr_id = #{id}</if>
+	</select>
+	
+	<!-- 페이징 -->
+	<select id="getList" resultType="co.jk.prj.review.service.ReviewVO">
+		select * from (select rownum rn, a.*
+		from (SELECT R.*,   
+		I.PR_IMG_NAME,
+		P.PR_NAME,
+		M.MEMBER_NAME
+		FROM PR_REVIEW R JOIN
+		PRODUCT P
+		ON R.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON R.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID = I.PR_ID
+		ORDER BY PR_REVIEW_ID DESC) a )
+		where rn <![CDATA[>]]>
+		((#{pageNum}-1)*#{amount}) and rn <![CDATA[<=]]>
+		(#{pageNum}*#{amount})
+	</select>
+
+	<!-- 전체게시글수 -->
+	<select id="getTotal" resultType="co.jk.prj.review.service.ReviewVO">
+		SELECT * FROM PR_REVIEW
+	</select>
+	
+	<!-- 검색시 전체 게시글 수  -->
+	<select id="getSearchTotal" resultType="int">
+		SELECT COUNT(*) AS TOTAL
+		FROM PR_REVIEW R JOIN
+		PRODUCT P
+		ON R.PR_ID = P.PR_ID
+		JOIN MEMBER M
+		ON
+		R.MEMBER_ID = M.MEMBER_ID
+		JOIN PR_IMG I
+		ON P.PR_ID = I.PR_ID
+		<if test="key == 'all'">WHERE 1 = 1</if>
+		<if test="key == 'prReviewTitle'">WHERE r.PR_REVIEW_TITLE LIKE '%'||#{val}||'%'</if>
+		<if test="key == 'memberName'">WHERE M.MEMBER_NAME LIKE '%'||#{val}||'%' </if>
+		<if test="key == 'memberId'">WHERE r.MEMBER_ID LIKE '%'||#{val}||'%' </if>
+		
+	</select>
+
+</mapper>

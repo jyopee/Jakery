@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.jk.prj.order.map.OrderMapper">
+	<select id="orderSelectList"
+		resultType="co.jk.prj.order.service.OrderVO">
+		SELECT
+		o.pr_id,
+		p.pr_name,
+		o.pr_order_id,
+		o.member_id,
+		(p.pr_price * o.pr_amount) pr_price,
+		o.pr_order_state,
+		o.pr_order_date
+		FROM product p, pr_order o, member m
+		WHERE o.pr_id = p.pr_id(+)
+		AND o.member_id = m.member_id(+)
+	</select>
+
+	<select id="orderSelect"
+		resultType="co.jk.prj.order.service.OrderVO">
+		SELECT
+		o.pr_id,
+		p.pr_name,
+		o.pr_order_id,
+		o.member_id,
+		(p.pr_price * o.pr_amount) pr_price,
+		o.pr_order_state,
+		o.pr_order_date
+		FROM product p, pr_order o, member m
+		WHERE o.pr_id = p.pr_id
+		AND o.member_id = m.member_id
+		AND o.member_id = #{memberId}
+	</select>
+
+	<insert id="orderInsert"
+		parameterType="co.jk.prj.order.service.OrderVO">
+		<selectKey keyProperty="prOrderId" resultType="int"
+			order="BEFORE">
+			SELECT CASE WHEN MAX(pr_order_id) IS NULL THEN 1 ELSE
+			MAX(pr_order_id) + 1
+			END
+			AS ID
+			FROM pr_order
+		</selectKey>
+		INSERT INTO pr_order (pr_order_Id,pr_id,member_id,pr_amount)
+		VALUES(#{prOrderId},#{prId},#{memberId},#{prAmount})
+	</insert>
+
+	<delete id="orderDelete"
+		parameterType="co.jk.prj.order.service.OrderVO">
+
+	</delete>
+
+	<update id="orderUpdate">
+		UPDATE pr_order
+		<set>
+			<if test="prOrderState != null">pr_order_state = #{prOrderState}</if>
+		</set>
+		WHERE pr_order_ID = #{prOrderId}
+	</update>
+
+</mapper>

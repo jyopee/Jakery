@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.jk.prj.qna.map.CommentMapper">
+	<select id="commentSelectList" resultType="co.jk.prj.qna.service.CommentVO">
+		SELECT * FROM PR_QNA_COM WHERE PR_QNA_ID = #{prQnaId}
+		ORDER BY PR_QNA_COM_ID DESC
+	</select>
+	
+	<select id="commentSelect" resultType="co.jk.prj.qna.service.CommentVO">
+	   select * from PR_QNA_COM WHERE PR_QNA_com_ID = #{prQnaComId}
+	</select>
+	
+	<insert id="commentInsert" parameterType="co.jk.prj.qna.service.CommentVO">
+	    <selectKey keyProperty="prQnaComId" resultType="int"
+			order="BEFORE">
+			SELECT CASE WHEN MAX(PR_QNA_COM_ID) IS NULL THEN 1 
+			                                           ELSE MAX(PR_QNA_COM_ID) + 1 
+			                                           END AS ID
+			FROM PR_QNA_COM
+		</selectKey>
+	INSERT INTO PR_QNA_COM (PR_QNA_COM_ID, MEMBER_ID, PR_QNA_ID, PR_QNA_COM_SUBJECT)
+	VALUES(#{prQnaComId},#{memberId}, #{prQnaId}, #{prQnaComSubject})
+	</insert>
+	
+	<update id="commentUpdate" parameterType="co.jk.prj.qna.service.CommentVO">
+	UPDATE PR_QNA_COM
+	<set>
+	<if test="prQnaComSubject != null">PR_QNA_COM_SUBJECT = #{prQnaComSubject}</if>
+	</set>
+	WHERE PR_QNA_COM_ID = #{prQnaComId}
+	</update>
+	
+	<delete id="commnetDelete" parameterType="co.jk.prj.qna.service.CommentVO">
+	DELETE FROM PR_QNA_COM 
+	<if test="prQnaId != 0"> WHERE PR_QNA_ID = #{prQnaId}</if>
+	<if test="prQnaComId != 0"> WHERE PR_QNA_COM_ID = #{prQnaComId}</if>
+	</delete>
+	
+<!-- 	<delete id="commentOneDelete" parameterType="co.jk.prj.qna.service.CommentVO"> -->
+<!-- 	DELETE FROM PR_QNA_COM WHERE PR_QNA_ID = #{prQnaId} -->
+<!-- 	</delete> -->
+
+</mapper>
